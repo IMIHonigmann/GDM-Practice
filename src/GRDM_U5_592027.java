@@ -33,7 +33,7 @@ public class GRDM_U5_592027 implements PlugIn {
     private int height;
 
     // List of filters/methods to apply
-    String[] items = {"Original", "Verdunkeln", "Weichzeichnen (Box Blur)", "Sharpening", "Verst.Kanten",};
+    String[] items = {"Original", "Verdunkeln", "Weichzeichnen (Box Blur)", "Hochpassfilter (high pass filter)", "Verst.Kanten",};
 
     public static void main(String args[]) {
 
@@ -203,8 +203,8 @@ public class GRDM_U5_592027 implements PlugIn {
             }
         }
 
-            if (method.equals("Sharpening")) {
-                // Sharpening filter
+            if (method.equals("Hochpassfilter (high pass filter)")) {
+                // Hochpassfilter
                 // 8 * 0.11 = 0.88
                 // 1-0.88 = 0.12
                 // 0.12 * 10 = 1.2
