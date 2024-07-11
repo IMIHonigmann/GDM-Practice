@@ -85,56 +85,66 @@ public class GRDM_U6_592027 implements PlugInFilter {
                 }
             }
         }
-        if(choice.equals("Bilinear")) {
-            for (int y_n=0; y_n<height_n; y_n++) {
-                for (int x_n=0; x_n<width_n; x_n++) {
-                    int y = y_n;
-                    int x = x_n;
+        if (choice.equals("Bilinear")) {
+            for (int y_n = 0; y_n < height_n; y_n++) {
+                for (int x_n = 0; x_n < width_n; x_n++) {
+                    float srcX = (float) x_n / scaleFactor;
+                    float srcY = (float) y_n / scaleFactor;
 
-                    if (y < height && x < width) {
-                        int pos_n = y_n*width_n + x_n;
-                        int pos  =  y  *width   + x;
+                    int x = x_n / scaleFactor;
+                    int y = y_n / scaleFactor;
 
-                        pix_n[pos_n * scaleFactor] = pix[pos];
+                    float dx = srcX - x;
+                    float dy = srcY - y;
+
+                    if (x >= 0 && y >= 0 && x < width - 1 && y < height - 1) {
+                        int pos = y * width + x;
+
+                        int colorTL = pix[pos];
+                        int colorTR = pix[pos + 1];
+                        int colorBL = pix[pos + width];
+                        int colorBR = pix[pos + width + 1];
+
+                        int[] rgbTL = getRGB(colorTL);
+                        int[] rgbTR = getRGB(colorTR);
+                        int[] rgbBL = getRGB(colorBL);
+                        int[] rgbBR = getRGB(colorBR);
+
+                        int rn = (int)(
+                                rgbTL[0] * (1 - dx) * (1 - dy) +
+                                        rgbTR[0] * dx * (1 - dy) +
+                                        rgbBL[0] * (1 - dx) * dy +
+                                        rgbBR[0] * dx * dy
+                        );
+                        int gn = (int)(
+                                rgbTL[1] * (1 - dx) * (1 - dy) +
+                                        rgbTR[1] * dx * (1 - dy) +
+                                        rgbBL[1] * (1 - dx) * dy +
+                                        rgbBR[1] * dx * dy
+                        );
+                        int bn = (int)(
+                                rgbTL[2] * (1 - dx) * (1 - dy) +
+                                        rgbTR[2] * dx * (1 - dy) +
+                                        rgbBL[2] * (1 - dx) * dy +
+                                        rgbBR[2] * dx * dy
+                        );
+
+                        rn = Math.min(255, Math.max(0, rn));
+                        gn = Math.min(255, Math.max(0, gn));
+                        bn = Math.min(255, Math.max(0, bn));
+
+                        int res = 0xFF000000 | (rn << 16) | (gn << 8) | bn;
+
+                        int pos_n = y_n * width_n + x_n;
+                        pix_n[pos_n] = res;
                     }
-                }
-            }
-//            pix_n[1] = 0xFFFF0000;
-
-            pix_n[1] = 0xFFFFFFFF;
-            pix_n[width_n] = 0xFFFFFFFF;
-            pix_n[width_n+2] = 0xFFF333;
-            pix_n[2*width_n+1] = 0xFFFFF;
-
-            int rn = (int) (getRGB(pix_n[0])[0]*(1-0.5)*(1-0.5) + getRGB(pix_n[2])[0]*0.5*(1-0.5) + getRGB(pix_n[2*width+0])[0]*(1-0.5)*0.5 + getRGB(pix_n[2*width+2])[0]*0.5*0.5);
-            int gn = (int) (getRGB(pix_n[0])[1]*(1-0.5)*(1-0.5) + getRGB(pix_n[2])[1]*0.5*(1-0.5) + getRGB(pix_n[2*width+0])[1]*(1-0.5)*0.5 + getRGB(pix_n[2*width+2])[1]*0.5*0.5);
-            int bn = (int) (getRGB(pix_n[0])[2]*(1-0.5)*(1-0.5) + getRGB(pix_n[2])[2]*0.5*(1-0.5) + getRGB(pix_n[2*width+0])[2]*(1-0.5)*0.5 + getRGB(pix_n[2*width+2])[2]*0.5*0.5);
-
-            rn = Math.min(255, Math.max(0, rn));
-            gn = Math.min(255, Math.max(0, gn));
-            bn = Math.min(255, Math.max(0, bn));
-
-            pix_n[width_n+1] = 0xFF000000 | (rn << 16) | (gn << 8) | bn;
-//            pix_n[width_n+1] = (int) (pix[0]*(1-0.5)*(1-0.5) + pix[2]*0.5*(1-0.5) + pix[2*width+0]*(1-0.5)*0.5 + pix[2*width+2]*0.5*0.5);
-
-            for(int ky=0; ky < 3; ky++) {
-                for(int kx=0; kx < 3; kx++) {
-                    int k_pos = ky*width+kx;
-                    int k_argb = pix_n[k_pos];
-                    if(k_argb != 0xFF000000) continue;
-                    // sonst gehe formel durch für den pixel
                 }
             }
         }
 
-
         // neues Bild anzeigen
         neu.show();
         neu.updateAndDraw();
-    }
-
-    int bilInterpolate(int[] pix, int width, int colorChannel) {
-        return (int) (pix[0]*(1-0.5)*(1-0.5) + pix[2]*0.5*(1-0.5) + pix[width]*(1-0.5)*0.5 + pix[width+2]*0.5*0.5);
     }
 
     int[] getRGB(int argb) {
