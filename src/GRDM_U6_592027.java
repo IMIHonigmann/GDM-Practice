@@ -5,6 +5,8 @@ import ij.gui.NewImage;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
+import java.awt.*;
+
 
 public class GRDM_U6_592027 implements PlugInFilter {
 
@@ -21,13 +23,21 @@ public class GRDM_U6_592027 implements PlugInFilter {
 
         GenericDialog gd = new GenericDialog("scale");
         gd.addChoice("Methode",dropdownmenue,dropdownmenue[0]);
-        gd.addNumericField("Hoehe:",500,0);
-        gd.addNumericField("Breite:",400,0);
+        gd.addNumericField("Hoehe:",230,0);
+        gd.addNumericField("Breite:",250,0);
+        gd.addNumericField("Skalierungsfaktor:",2,0);
+        gd.addCheckbox("Auflösung mit Skalierung verknüpfen", false);
 
         gd.showDialog();
 
-        int height_n = (int)gd.getNextNumber(); // _n fuer das neue skalierte Bild
-        int width_n =  (int)gd.getNextNumber();
+        int scaleFactor = 1;
+        if(gd.getNextBoolean()) {
+            TextField scaleText = (TextField) gd.getNumericFields().get(2);
+            scaleFactor = Integer.parseInt(scaleText.getText());
+        }
+
+        int height_n = (int) (gd.getNextNumber() * scaleFactor); // _n fuer das neue skalierte Bild
+        int width_n =  (int) (gd.getNextNumber() * scaleFactor);
 
         int width  = ip.getWidth();  // Breite bestimmen
         int height = ip.getHeight(); // Hoehe bestimmen
@@ -43,19 +53,35 @@ public class GRDM_U6_592027 implements PlugInFilter {
 
         int[] pix = (int[])ip.getPixels();
         int[] pix_n = (int[])ip_n.getPixels();
+        String choice = gd.getNextChoice();
 
-        // Schleife ueber das neue Bild
-        for (int y_n=0; y_n<height_n; y_n++) {
-            for (int x_n=0; x_n<width_n; x_n++) {
-                int y = y_n;
-                int x = x_n;
+        if(choice.equals("Kopie")) {
+            for (int y_n=0; y_n<height_n; y_n++) {
+                for (int x_n=0; x_n<width_n; x_n++) {
+                    int y = y_n;
+                    int x = x_n;
 
-                if (y < height && x < width) {
-                    int pos_n = y_n*width_n + x_n;
-                    int pos  =  y  *width   + x;
+                    if (y < height && x < width) {
+                        int pos_n = y_n*width_n + x_n;
+                        int pos  =  y  *width   + x;
 
-                    pix_n[pos_n] = pix[pos];
-//                    pix_n[pos_n+(50*width_n) + 50] = pix[pos];
+                        pix_n[pos_n] = pix[pos];
+                    }
+                }
+            }
+        }
+        if(choice.equals("Pixelwiederholung")) {
+            for (int y_n=0; y_n<height_n; y_n++) {
+                for (int x_n=0; x_n<width_n; x_n++) {
+                    int y = Math.round(y_n / 2);
+                    int x = Math.round(x_n / 2);
+
+                    if (y < height && x < width) {
+                        int pos_n = y_n*width_n + x_n;
+                        int pos  =  y  *width   + x;
+
+                        pix_n[pos_n] = pix[pos];
+                    }
                 }
             }
         }
