@@ -19,14 +19,14 @@ public class GRDM_U6_592027 implements PlugInFilter {
 
     public void run(ImageProcessor ip) {
 
-        String[] dropdownmenue = {"Bilinear", "Pixelwiederholung", "Kopie"};
+        String[] dropdownmenu = {"Kopie", "Pixelwiederholung", "Pixelwiederholung (nach Folien)", "Bilinear"};
 
         GenericDialog gd = new GenericDialog("scale");
-        gd.addChoice("Methode",dropdownmenue,dropdownmenue[0]);
+        gd.addChoice("Methode", dropdownmenu, dropdownmenu[0]);
         gd.addNumericField("Hoehe:",230,0);
         gd.addNumericField("Breite:",250,0);
         gd.addNumericField("Skalierungsfaktor:",2,0);
-        gd.addCheckbox("Auflösung mit Skalierung verknüpfen", true);
+        gd.addCheckbox("Auflösung mit Skalierung verknüpfen", false);
 
         gd.showDialog();
 
@@ -85,6 +85,42 @@ public class GRDM_U6_592027 implements PlugInFilter {
                 }
             }
         }
+        if (choice.equals("Pixelwiederholung (nach Folien)")) {
+            for (int y_n = 0; y_n < height_n; y_n++) {
+                for (int x_n = 0; x_n < width_n; x_n++) {
+                    float srcX = (float) x_n / scaleFactor;
+                    float srcY = (float) y_n / scaleFactor;
+
+                    int x = x_n / scaleFactor;
+                    int y = y_n / scaleFactor;
+
+                    float dx = srcX - x;
+                    float dy = srcY - y;
+
+                    int pos = y * width + x;
+                    int pos_n = y_n * width_n + x_n;
+                    if (y < height-1 && x < width-1) {
+
+                        int colorTL = pix[pos];
+                        int colorTR = pix[pos + 1];
+                        int colorBL = pix[pos + width];
+                        int colorBR = pix[pos + width + 1];
+
+                        int res = 0;
+                        if(dx < 0.5 && dy < 0.5) res = colorTL;
+                        if(dx >= 0.5 && dy < 0.5) res = colorTR;
+                        if(dx < 0.5 && dy >= 0.5) res = colorBL;
+                        if(dx >= 0.5 && dy >= 0.5) res = colorBR;
+
+
+                        pix_n[pos_n] = res;
+                    }
+                    else {
+                        pix_n[pos_n] = pix[pos];
+                    }
+                }
+            }
+        }
         if (choice.equals("Bilinear")) {
             for (int y_n = 0; y_n < height_n; y_n++) {
                 for (int x_n = 0; x_n < width_n; x_n++) {
@@ -97,8 +133,10 @@ public class GRDM_U6_592027 implements PlugInFilter {
                     float dx = srcX - x;
                     float dy = srcY - y;
 
-                    if (x >= 0 && y >= 0 && x < width - 1 && y < height - 1) {
-                        int pos = y * width + x;
+                    int pos = y * width + x;
+                    int pos_n = y_n * width_n + x_n;
+
+                    if (y < height-1 && x < width-1) {
 
                         int colorTL = pix[pos];
                         int colorTR = pix[pos + 1];
@@ -135,8 +173,10 @@ public class GRDM_U6_592027 implements PlugInFilter {
 
                         int res = 0xFF000000 | (rn << 16) | (gn << 8) | bn;
 
-                        int pos_n = y_n * width_n + x_n;
                         pix_n[pos_n] = res;
+                    }
+                    else {
+                        pix_n[pos_n] = pix[pos];
                     }
                 }
             }
