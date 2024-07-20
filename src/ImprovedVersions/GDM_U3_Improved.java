@@ -24,7 +24,7 @@ public class GDM_U3_Improved implements PlugIn {
     private int width;
     private int height;
 
-    String[] items = {"Original", "Rot-Kanal", "Graustufen", "Binär", "5 Graustufen", "27 Graustufen"};
+    String[] items = {"Original", "Rot-Kanal", "Graustufen", "Binär", "5 Graustufen", "27 Graustufen", "Fehlerdiffusion"};
 
 
     public static void main(String args[]) {
@@ -244,6 +244,40 @@ public class GDM_U3_Improved implements PlugIn {
                         // Hier muessen die neuen RGB-Werte wieder auf den Bereich von 0 bis 255 begrenzt werden
 
                         pixels[pos] = (0xFF<<24) | (rn<<16) | (gn<<8) | bn;
+                    }
+                }
+            }
+
+            if (method.equals("Fehlerdiffusion")) {
+                for (int x=0; x<width; x++) {
+                    for (int y=0; y<height; y++) {
+                        int pos = y*width + x;
+                        int argb = origPixels[pos];
+
+                        int r = (argb >> 16) & 0xff;
+                        int g = (argb >>  8) & 0xff;
+                        int b =  argb        & 0xff;
+
+                        int median = (r+g+b) / 3;
+                        int binary = (median < 128) ? 0 : 255;
+                        int fehler = median - binary;
+
+                        pixels[pos] = (0xFF<<24) | (binary<<16) | (binary<<8) | binary;
+
+                        // Applies the error on the pixel below
+                        if (y + 1 < height) {
+                            int belowPos = (y + 1) * width + x;
+                            int belowArgb = origPixels[belowPos];
+                            int belowR = (belowArgb >> 16) & 0xff;
+                            int belowG = (belowArgb >>  8) & 0xff;
+                            int belowB =  belowArgb        & 0xff;
+
+                            int belowMedian = (belowR + belowG + belowB) / 3;
+                            belowMedian += fehler/2;
+                            belowMedian = Math.max(0, Math.min(255, belowMedian));
+
+                            origPixels[belowPos] = (0xFF << 24) | (belowMedian << 16) | (belowMedian << 8) | belowMedian;
+                        }
                     }
                 }
             }
